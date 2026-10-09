@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>متابعة المذاكرة</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f4f3f0;direction:rtl;padding:16px;min-height:100vh}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .total-label{font-size:12px;color:#aaa;margin-bottom:2px}
+  .total-num{font-size:22px;font-weight:700;color:#111}
+  .total-num span{font-size:14px;font-weight:400;color:#999}
+  .overdue-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#b3261e;background:#fbe2e0;border-radius:20px;padding:3px 10px;margin-top:4px}
+  .overdue-pill.zero{display:none}
+  .global-bar{height:5px;background:#e0e0de;border-radius:5px;margin-bottom:12px;overflow:hidden}
+  .global-fill{height:100%;background:#1D9E75;border-radius:5px;transition:width .3s}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#999;background:#eeecea;border-radius:8px;padding:6px 10px;margin-bottom:12px}
+  .legend b{color:#555}
+  .legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-left:3px;vertical-align:middle}
+  .btn-print{font-size:12px;padding:7px 16px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#333}
+  .btn-print:hover{background:#f5f5f5}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .card{background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e0dedd}
+  .card-head{padding:10px 12px}
+  .card-name{font-size:12.5px;font-weight:700;color:#fff;line-height:1.35;flex:1}
+  .card-badge{font-size:11px;font-weight:700;border-radius:20px;padding:1px 8px;white-space:nowrap;flex-shrink:0}
+  .card-meta{font-size:9.5px;color:rgba(255,255,255,0.65);margin-top:2px}
+  .mini-bar{height:3px;border-radius:3px;margin-top:7px;overflow:hidden;background:rgba(255,255,255,0.2)}
+  .mini-fill{height:100%;border-radius:3px;background:#fff;transition:width .25s}
+
+  /* Release tracker */
+  .release-row{display:flex;align-items:center;gap:6px;margin-top:9px;background:rgba(0,0,0,0.15);border-radius:7px;padding:5px 6px}
+  .release-step{width:16px;height:16px;border:none;border-radius:5px;background:rgba(255,255,255,0.25);color:#fff;font-size:12px;font-weight:900;line-height:1;cursor:pointer;flex-shrink:0}
+  .release-step:hover{background:rgba(255,255,255,0.4)}
+  .release-track{display:flex;gap:2px;flex:1;min-width:0}
+  .release-dot{flex:1;height:14px;min-width:9px;border:none;border-radius:2px;background:rgba(255,255,255,0.22);cursor:pointer;padding:0}
+  .release-dot.filled{background:#fff}
+  .release-count{font-size:9.5px;color:rgba(255,255,255,0.85);font-weight:700;white-space:nowrap;flex-shrink:0}
+
+  .col-heads{display:grid;grid-template-columns:22px 1fr 1fr 1fr 1fr;gap:2px;padding:4px 10px 2px;background:#f7f7f6;border-bottom:1px solid #eee;font-size:9.5px;text-align:center;color:#bbb}
+  .chapters{padding:3px 10px 6px}
+  .ch-row{display:grid;grid-template-columns:22px 1fr 1fr 1fr 1fr;gap:2px;align-items:center;padding:2px 3px;margin-bottom:1px;border-radius:4px;transition:background .2s}
+  .ch-label{font-size:10px;color:#777;line-height:1}
+  .ch-label.done{font-weight:700}
+  .ch-label.urgent{font-weight:700;color:#b3261e}
+  .ch-cb{display:flex;justify-content:center}
+  .ch-cb input{width:13px;height:13px;cursor:pointer;margin:0}
+  .extras{border-top:1px solid #f0ede9;padding:6px 12px 8px;display:flex;flex-direction:column;gap:5px}
+  .extra-row{display:flex;align-items:center;gap:8px}
+  .extra-label{font-size:10.5px;font-weight:700;width:52px;flex-shrink:0}
+  .extra-checks{display:flex;gap:10px;align-items:center}
+  .extra-item{display:flex;align-items:center;gap:3px;cursor:pointer}
+  .extra-item input{width:14px;height:14px;cursor:pointer;margin:0}
+  .extra-item span{font-size:10px;color:#ccc}
+  .extra-item input:checked+span{font-weight:700}
+  .extra-count{font-size:10px;color:#ccc;margin-right:auto}
+  .reset-btn{display:block;margin:16px auto 0;font-size:11px;color:#ccc;background:none;border:none;cursor:pointer}
+
+  /* ===== Sync / auth / dialogs ===== */
+  .sync-chip{font-size:10.5px;padding:3px 10px;border-radius:20px;background:#eee;color:#888;align-self:center;white-space:nowrap}
+  .sync-chip.ok{background:#e1f5ee;color:#0F6E56}
+  .sync-chip.warn{background:#fff3d6;color:#8a5a00}
+  .sync-chip.err{background:#fbe2e0;color:#b3261e}
+  .sync-chip.warn,.sync-chip.err{white-space:normal;line-height:1.5}
+  .btn-sm{font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#333}
+  .btn-sm:hover{background:#f5f5f5}
+  .btn-sm.primary{background:#1D9E75;border-color:#1D9E75;color:#fff}
+  .btn-sm.primary:hover{background:#178a65}
+  .foot-actions{display:flex;justify-content:center;gap:14px;margin-top:16px}
+  .foot-actions .reset-btn{margin:0}
+  dialog{margin:auto;border:none;border-radius:14px;padding:18px 18px 14px;width:min(380px,92vw);box-shadow:0 10px 40px rgba(0,0,0,.25);direction:rtl;font-family:inherit}
+  dialog::backdrop{background:rgba(0,0,0,.4)}
+  .dlg-title{font-size:15px;font-weight:700;color:#111;margin-bottom:4px}
+  .dlg-sub{font-size:11px;color:#888;line-height:1.6;margin-bottom:12px}
+  .dlg-field{display:block;margin-bottom:10px}
+  .dlg-field span{display:block;font-size:11px;color:#666;margin-bottom:3px}
+  .dlg-field input,#backup-text{width:100%;font-size:14px;padding:9px 10px;border:1px solid #d6d4d0;border-radius:8px;font-family:inherit;background:#fafaf9}
+  .dlg-field input[dir=ltr]{text-align:left}
+  #backup-text{font-size:11px;font-family:ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+  .dlg-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+  .dlg-msg{font-size:11.5px;margin-top:8px;min-height:16px;color:#b3261e;line-height:1.5}
+  .dlg-msg.ok{color:#0F6E56}
+
+  /* ===== Live lectures ===== */
+  .live-sec{margin-bottom:14px}
+  .sec-title{font-size:13px;font-weight:700;color:#333;margin:0 2px 8px;display:flex;align-items:baseline;gap:8px}
+  .sec-title small{font-size:10.5px;color:#aaa;font-weight:400}
+  .next-card{border-radius:12px;padding:14px 16px;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .next-tag{font-size:10.5px;font-weight:700;opacity:.85}
+  .next-name{font-size:18px;font-weight:700;line-height:1.3;margin-top:2px}
+  .next-when{font-size:12.5px;opacity:.95;margin-top:3px}
+  .next-meta{font-size:10.5px;opacity:.7;margin-top:4px}
+  .next-count{background:rgba(255,255,255,.18);border-radius:10px;padding:8px 16px;text-align:center;min-width:120px}
+  .next-count span{display:block;font-size:10px;opacity:.85}
+  .next-count b{display:block;font-size:16px;line-height:1.3;margin-top:1px}
+  .next-after{font-size:11px;color:#888;margin:6px 4px 10px}
+  .week{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .day{background:#fff;border:1px solid #e0dedd;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+  .day-head{padding:6px 10px;font-size:11.5px;font-weight:700;color:#555;background:#f7f7f6;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+  .day-head i{font-style:normal;font-size:9.5px;font-weight:700;opacity:0}
+  .day.today .day-head{background:#1D9E75;color:#fff}
+  .day.today .day-head i{opacity:.9}
+  .day-body{padding:6px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .day-empty{font-size:10.5px;color:#ccc;text-align:center;padding:14px 0}
+  .lec{border-radius:8px;padding:7px 9px;border-right:4px solid #999}
+  .lec.is-next,.lec.is-live{box-shadow:0 0 0 1.5px var(--c)}
+  .lec-name{font-size:11.5px;font-weight:700;line-height:1.35}
+  .lec-time{font-size:10.5px;color:#444;margin-top:2px;font-weight:600;white-space:nowrap}
+  .lec-teacher{font-size:9.5px;color:#999;margin-top:1px}
+  .lec-badge{display:none;width:fit-content;margin-bottom:4px;font-size:9px;font-weight:700;color:#fff;border-radius:10px;padding:1px 8px}
+  .lec.is-next .lec-badge,.lec.is-live .lec-badge{display:block}
+  .lec-live{margin-top:6px;padding-top:5px;border-top:1px dashed rgba(0,0,0,.1)}
+  .lec-live-head{display:flex;align-items:center;justify-content:space-between}
+  .lec-live-label{font-size:10px;font-weight:700}
+  .lec-live-count{font-size:10px;color:#aaa}
+  .lv-strip{display:flex;justify-content:space-between;gap:2px;margin-top:5px}
+  .lv-cell{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex:1}
+  .lv-cell input{width:14px;height:14px;cursor:pointer;margin:0}
+  .lv-date{font-size:9.5px;color:#aaa;white-space:nowrap}
+
+  @media (max-width:900px){
+    .week{grid-template-columns:repeat(2,1fr)}
+    .day.empty{display:none}
+  }
+  @media (max-width:560px){
+    .week{grid-template-columns:1fr}
+  }
+
+  @media (max-width:480px){
+    .grid{grid-template-columns:1fr}
+  }
+
+  @media print{
+    body{background:#fff;padding:8px}
+    .no-print{display:none!important}
+    .grid{grid-template-columns:1fr 1fr 1fr;gap:8px}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+  @page{margin:1cm;size:A4 landscape}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <div class="total-label">إجمالي التقدم — الترم الجديد</div>
+    <div class="total-num" id="total-num">0 <span>/ 315 (0%)</span></div>
+    <div class="overdue-pill zero" id="overdue-pill">⚠ 0 فصل نازل ولسه ما خلص</div>
+  </div>
+  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span id="save-indicator" style="font-size:10px;color:#ccc;align-self:center"></span>
+    <span class="sync-chip" id="sync-chip">المزامنة: جارٍ التحميل…</span>
+    <button class="btn-sm" id="auth-btn" style="display:none"></button>
+    <button class="btn-print" onclick="window.print()">طباعة PDF</button>
+  </div>
+</div>
+
+<div class="global-bar"><div class="global-fill" id="global-fill" style="width:0%"></div></div>
+
+<section class="live-sec">
+  <div class="sec-title">المحاضرات المباشرة <small>جدول المحاضرات المباشرة · توقيت الرياض</small></div>
+  <div class="no-print" id="next-box"></div>
+  <div class="week" id="week-grid"></div>
+</section>
+
+<div class="legend no-print">
+  <span><b>و١ و٢ و٣</b> = الوحدات الثلاث</span>
+  <span><b>نقاش</b> = مناقشة الفصل</span>
+  <span><b>واجبات</b> = 3 لكل مادة</span>
+  <span><b>مباشرة</b> = 4 محاضرات مباشرة (التاريخ تحت كل خانة)</span>
+  <span><span class="dot" style="background:#dc2626"></span><b>خط أحمر</b> = نزل رسمياً ولسه ما خلصته</span>
+  <span><span class="dot" style="background:#ccc"></span><b>باهت</b> = لسه ما نزل رسمياً</span>
+</div>
+
+<div class="grid" id="cards-grid"></div>
+
+<div class="foot-actions no-print">
+  <button class="reset-btn" onclick="openBackup()">نسخ احتياطي / نقل بيانات</button>
+  <button class="reset-btn" onclick="resetAll()">مسح كل التقدم</button>
+</div>
+
+<dialog id="login-dlg">
+  <form id="login-form" autocomplete="on">
+    <div class="dlg-title">تسجيل الدخول للمزامنة</div>
+    <div class="dlg-sub">نفس الحساب على اللابتوب والجوال، وتتزامن تشيكاتك بينهم.</div>
+    <label class="dlg-field"><span>الإيميل</span><input id="login-email" type="email" dir="ltr" autocomplete="username" required></label>
+    <label class="dlg-field"><span>كلمة السر</span><input id="login-pass" type="password" dir="ltr" autocomplete="current-password" required></label>
+    <div class="dlg-msg" id="login-msg"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn-sm" id="login-cancel">إلغاء</button>
+      <button type="submit" class="btn-sm primary" id="login-submit">دخول</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="backup-dlg">
+  <div class="dlg-title">نسخ احتياطي / نقل بيانات</div>
+  <div class="dlg-sub">«عرض الحالية» يطلّع نصاً تنسخه وتحفظه. «دمج النص» يدمج نصاً لصقته مع بياناتك: أي تشيك موجود في الطرفين يبقى، ولا يُمسح شي.</div>
+  <textarea id="backup-text" rows="8" dir="ltr" placeholder="الصق النص هنا…"></textarea>
+  <div class="dlg-msg" id="bk-msg"></div>
+  <div class="dlg-actions">
+    <button class="btn-sm" id="bk-close">إغلاق</button>
+    <button class="btn-sm" id="bk-show">عرض الحالية</button>
+    <button class="btn-sm primary" id="bk-merge">دمج النص</button>
+  </div>
+</dialog>
+
+<script>
+const SUBJECTS = [
+  {id:'s1',name:'البرمجة كائنية التوجه 2',      teacher:'عبدالعزيز الحمام',  color:'#8B3515',p:1},
+  {id:'s2',name:'إدارة أنظمة قواعد البيانات',   teacher:'حيدر وحشة',        color:'#0F6E56',p:2},
+  {id:'s3',name:'اساسيات الأمن السيبراني',      teacher:'محمد النعيم',       color:'#5236AB',p:3},
+  {id:'s4',name:'تصميم وتطوير البرمجيات',      teacher:'ماجد السعيد',       color:'#185FA5',p:4},
+  {id:'s5',name:'إدارة وصيانة النظم',           teacher:'محمد الغوانم',      color:'#7A4409',p:5},
+]
+const CHAPTER_COUNT = 14
+const LIVE_COUNT = 4 // 4 محاضرات مباشرة لكل مادة (حسب الجداول المفصّلة)
+const TOTAL_PER = CHAPTER_COUNT*3 + CHAPTER_COUNT + 3 + LIVE_COUNT // units + discussions + homework + live
+const TOTAL_ALL = SUBJECTS.length * TOTAL_PER
+
+const SKEY = 'kfu_new_term_html_v1'
+
+function buildFresh(){
+  const s={}
+  SUBJECTS.forEach(sub=>{
+    s[sub.id]={
+      units:Array(CHAPTER_COUNT).fill(null).map(()=>[false,false,false]),
+      discussions:Array(CHAPTER_COUNT).fill(false),
+      homework:[false,false,false],
+      live:Array(LIVE_COUNT).fill(false),
+      released:0 // last chapter officially released by the professor (0-14)
+    }
+  })
+  return s
+}
+
+let STATE = buildFresh()
+try{
+  const r=localStorage.getItem(SKEY)
+  if(r){
+    const loaded=JSON.parse(r)
+    // merge onto fresh defaults so old saves without "released" don't break
+    SUBJECTS.forEach(sub=>{
+      if(loaded[sub.id]){
+        STATE[sub.id]=Object.assign(STATE[sub.id],loaded[sub.id])
+        // ترحيل الحفظ القديم (3 محاضرات مباشرة) إلى 4 بدون فقد أي تشيك
+        const lv=STATE[sub.id].live
+        while(lv.length<LIVE_COUNT) lv.push(false)
+      }
+    })
+  }
+}catch(e){}
+
+function save(){
+  try{localStorage.setItem(SKEY,JSON.stringify(STATE))}catch(e){}
+  document.getElementById('save-indicator').textContent='محفوظ'
+  setTimeout(()=>document.getElementById('save-indicator').textContent='',1200)
+  if(window.__syncPush)window.__syncPush() // مزامنة Firebase (لو مسجّل دخول)
+}
+
+function chapterDone(d,ci){
+  return d.units[ci].every(Boolean) && d.discussions[ci]
+}
+
+function countDone(d){
+  if(!d)return 0
+  return d.units.flat().filter(Boolean).length +
+         d.discussions.filter(Boolean).length +
+         d.homework.filter(Boolean).length +
+         d.live.filter(Boolean).length
+}
+
+// chapters that are officially released but not yet fully done
+function countOverdue(d){
+  let n=0
+  for(let ci=0;ci<CHAPTER_COUNT;ci++){
+    if(ci < d.released && !chapterDone(d,ci)) n++
+  }
+  return n
+}
+
+function updateGlobal(){
+  const done=SUBJECTS.reduce((n,s)=>n+countDone(STATE[s.id]),0)
+  const overdueTotal=SUBJECTS.reduce((n,s)=>n+countOverdue(STATE[s.id]),0)
+  const pct=Math.round(done/TOTAL_ALL*100)
+  document.getElementById('total-num').innerHTML=done+' <span>/ '+TOTAL_ALL+' ('+pct+'%)</span>'
+  document.getElementById('global-fill').style.width=pct+'%'
+
+  const pill=document.getElementById('overdue-pill')
+  if(overdueTotal>0){
+    pill.classList.remove('zero')
+    pill.textContent='⚠ '+overdueTotal+' فصل نازل ولسه ما خلص'
+  }else{
+    pill.classList.add('zero')
+  }
+
+  SUBJECTS.forEach(sub=>{
+    const d=STATE[sub.id]
+    const done2=countDone(d)
+    const el=document.getElementById('badge-'+sub.id)
+    if(el)el.textContent=done2+'/'+TOTAL_PER
+    const fill=document.getElementById('fill-'+sub.id)
+    if(fill)fill.style.width=Math.round(done2/TOTAL_PER*100)+'%'
+  })
+}
+
+function renderCards(){
+  const grid=document.getElementById('cards-grid')
+  grid.innerHTML=''
+  SUBJECTS.forEach(sub=>{
+    const d=STATE[sub.id]
+    const done=countDone(d)
+    const pct=Math.round(done/TOTAL_PER*100)
+    const card=document.createElement('div')
+    card.className='card'
+
+    // Header
+    const head=document.createElement('div')
+    head.className='card-head'
+    head.style.background=sub.color
+    head.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
+        <div class="card-name">${sub.name}</div>
+        <div class="card-badge" id="badge-${sub.id}" style="background:#fff;color:${sub.color}">${done}/${TOTAL_PER}</div>
+      </div>
+      <div class="card-meta">${sub.teacher} · أولوية ${sub.p}</div>
+      <div class="mini-bar"><div class="mini-fill" id="fill-${sub.id}" style="width:${pct}%"></div></div>
+    `
+    const releaseRow=document.createElement('div')
+    releaseRow.className='release-row'
+    const minusBtn=document.createElement('button')
+    minusBtn.className='release-step'
+    minusBtn.textContent='−'
+    minusBtn.title='إنقاص فصل نازل'
+    minusBtn.addEventListener('click',()=>setReleased(sub,Math.max(0,STATE[sub.id].released-1)))
+    releaseRow.appendChild(minusBtn)
+
+    const track=document.createElement('div')
+    track.className='release-track'
+    for(let i=1;i<=CHAPTER_COUNT;i++){
+      const dot=document.createElement('button')
+      dot.className='release-dot'+(i<=d.released?' filled':'')
+      dot.title='الفصل '+i
+      dot.addEventListener('click',()=>{
+        // clicking the current last-released dot un-releases it (undo), otherwise jump to it
+        setReleased(sub, STATE[sub.id].released===i ? i-1 : i)
+      })
+      track.appendChild(dot)
+    }
+    releaseRow.appendChild(track)
+
+    const plusBtn=document.createElement('button')
+    plusBtn.className='release-step'
+    plusBtn.textContent='+'
+    plusBtn.title='زيادة فصل نازل'
+    plusBtn.addEventListener('click',()=>setReleased(sub,Math.min(CHAPTER_COUNT,STATE[sub.id].released+1)))
+    releaseRow.appendChild(plusBtn)
+
+    const countLbl=document.createElement('div')
+    countLbl.className='release-count'
+    countLbl.id='rcount-'+sub.id
+    countLbl.textContent='نزل '+d.released+'/'+CHAPTER_COUNT
+    releaseRow.appendChild(countLbl)
+
+    head.appendChild(releaseRow)
+    card.appendChild(head)
+
+    // Col headers
+    const colH=document.createElement('div')
+    colH.className='col-heads'
+    colH.innerHTML='<div></div><div>و١</div><div>و٢</div><div>و٣</div><div style="color:'+sub.color+';font-weight:700">نقاش</div>'
+    card.appendChild(colH)
+
+    // Chapters
+    const chaps=document.createElement('div')
+    chaps.className='chapters'
+    for(let ci=0;ci<CHAPTER_COUNT;ci++){
+      const units=d.units[ci]
+      const row=document.createElement('div')
+      row.className='ch-row'
+      row.id='chrow-'+sub.id+'-'+ci
+      row.dataset.ci=ci
+      chaps.appendChild(row)
+
+      const lbl=document.createElement('div')
+      lbl.className='ch-label'
+      lbl.textContent='ف'+(ci+1)
+      row.appendChild(lbl)
+
+      for(let ui=0;ui<3;ui++){
+        const cell=document.createElement('div')
+        cell.className='ch-cb'
+        const cb=document.createElement('input')
+        cb.type='checkbox'
+        cb.checked=units[ui]
+        cb.style.accentColor='#999'
+        cb.addEventListener('change',()=>{
+          STATE[sub.id].units[ci][ui]=cb.checked
+          save()
+          updateRow(sub,ci)
+          updateGlobal()
+        })
+        cell.appendChild(cb)
+        row.appendChild(cell)
+      }
+
+      const discCell=document.createElement('div')
+      discCell.className='ch-cb'
+      const discCb=document.createElement('input')
+      discCb.type='checkbox'
+      discCb.checked=d.discussions[ci]
+      discCb.style.accentColor=sub.color
+      discCb.addEventListener('change',()=>{
+        STATE[sub.id].discussions[ci]=discCb.checked
+        save()
+        updateRow(sub,ci)
+        updateGlobal()
+      })
+      discCell.appendChild(discCb)
+      row.appendChild(discCell)
+
+      updateRow(sub,ci) // paint initial state (background/label classes)
+    }
+    card.appendChild(chaps)
+
+    // Homework + Live
+    const extras=document.createElement('div')
+    extras.className='extras'
+    extras.style.borderTopColor=sub.color+'28'
+    extras.style.background=sub.color+'08'
+    ;[
+      {key:'homework',label:'الواجبات',arr:d.homework},
+      {key:'live',    label:'المباشرة',arr:d.live}
+    ].forEach(({key,label,arr})=>{
+      const row2=document.createElement('div')
+      row2.className='extra-row'
+      const lbl=document.createElement('div')
+      lbl.className='extra-label'
+      lbl.style.color=sub.color
+      lbl.textContent=label
+      row2.appendChild(lbl)
+      const checks=document.createElement('div')
+      checks.className='extra-checks'
+      arr.forEach((val,i)=>{
+        const it=document.createElement('label')
+        it.className='extra-item'
+        const cb=document.createElement('input')
+        cb.type='checkbox'
+        cb.checked=val
+        cb.style.accentColor=sub.color
+        cb.addEventListener('change',()=>{
+          STATE[sub.id][key][i]=cb.checked
+          save()
+          const cnt=document.getElementById('cnt-'+sub.id+'-'+key)
+          if(cnt)cnt.textContent=STATE[sub.id][key].filter(Boolean).length+'/'+STATE[sub.id][key].length
+          updateGlobal()
+          if(key==='live')renderSchedule()
+        })
+        const sp=document.createElement('span')
+        sp.textContent=i+1
+        if(key==='live'){const ss=SESSIONS.find(x=>x.sub===sub.id&&x.i===i);if(ss)it.title=fullDateLabel(ss)}
+        sp.style.color=cb.checked?sub.color:'#ccc'
+        cb.addEventListener('change',()=>sp.style.color=cb.checked?sub.color:'#ccc')
+        it.appendChild(cb)
+        it.appendChild(sp)
+        checks.appendChild(it)
+      })
+      row2.appendChild(checks)
+      const cnt=document.createElement('div')
+      cnt.className='extra-count'
+      cnt.id='cnt-'+sub.id+'-'+key
+      cnt.textContent=arr.filter(Boolean).length+'/'+arr.length
+      row2.appendChild(cnt)
+      extras.appendChild(row2)
+    })
+    card.appendChild(extras)
+    grid.appendChild(card)
+  })
+}
+
+// Repaint a single chapter row's background + label state:
+// - done            -> subject color tint (regardless of release, e.g. studied ahead of schedule)
+// - released & not done -> red "needs attention now" highlight
+// - not released yet     -> muted/faded, still fully checkable
+function updateRow(sub,ci){
+  const row=document.getElementById('chrow-'+sub.id+'-'+ci)
+  if(!row)return
+  const d=STATE[sub.id]
+  const done=chapterDone(d,ci)
+  const unitsDone=d.units[ci].every(Boolean)
+  const released=ci < d.released
+  const lbl=row.querySelector('.ch-label')
+  lbl.classList.remove('done','urgent')
+
+  // background: نفس منطق الأصل تماماً (مكتمل / شبه مكتمل / عادي)،
+  // والحالة الوحيدة الجديدة هي "نازل ولسه ما بدأت فيه أبداً" → أحمر
+  if(done){
+    row.style.background=sub.color+'1c'
+  }else if(unitsDone){
+    row.style.background=sub.color+'09'
+  }else if(released){
+    row.style.background='#fdeceb'
+  }else{
+    row.style.background=ci%2?'#fafaf9':'#fff'
+  }
+
+  // التلوين: أحمر عريض لأي فصل نازل رسمياً وناقص (سواء ما بدأت فيه أو شبه خلصته)
+  if(done){
+    lbl.style.color=sub.color
+    lbl.classList.add('done')
+  }else if(released){
+    lbl.style.color='#b3261e'
+    lbl.classList.add('urgent')
+  }else{
+    lbl.style.color='#777'
+  }
+}
+
+function setReleased(sub,value){
+  STATE[sub.id].released=value
+  save()
+  for(let ci=0;ci<CHAPTER_COUNT;ci++) updateRow(sub,ci)
+  document.getElementById('rcount-'+sub.id).textContent='نزل '+value+'/'+CHAPTER_COUNT
+  repaintTrack(sub)
+  updateGlobal()
+}
+
+function repaintTrack(sub){
+  const card=[...document.querySelectorAll('.card')].find(c=>c.querySelector('#badge-'+sub.id))
+  if(!card)return
+  const dots=card.querySelectorAll('.release-dot')
+  dots.forEach((dot,idx)=>{
+    dot.classList.toggle('filled', idx+1<=STATE[sub.id].released)
+  })
+}
+
+function resetAll(){
+  if(!confirm('مسح كل التقدم والبدء من الصفر؟'))return
+  STATE=buildFresh()
+  save()
+  renderCards()
+  updateGlobal()
+  renderSchedule()
+}
+
+
+/* ===================== المحاضرات المباشرة ===================== */
+const DAYS_AR=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']
+const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
+// المصدر: الجداول المفصّلة لكل مادة (تاريخ ميلادي + من/إلى). الرياض = UTC+3 بدون توقيت صيفي.
+const LIVE_SESSIONS={
+  s1:{crn:'82468',start:'18:30',end:'19:00',dates:['2026-10-05','2026-10-19','2026-11-02','2026-11-16']}, // البرمجة كائنية التوجه 2 — الاثنين
+  s2:{crn:'82437',start:'19:15',end:'19:45',dates:['2026-10-04','2026-10-18','2026-11-01','2026-11-15']}, // قواعد البيانات — الأحد
+  s3:{crn:'82452',start:'20:00',end:'20:30',dates:['2026-10-04','2026-10-18','2026-11-01','2026-11-15']}, // الأمن السيبراني — الأحد
+  s4:{crn:'82424',start:'19:15',end:'19:45',dates:['2026-10-05','2026-10-19','2026-11-02','2026-11-16']}, // تصميم وتطوير البرمجيات — الاثنين
+  s5:{crn:'82498',start:'20:45',end:'21:15',dates:['2026-10-04','2026-10-18','2026-11-01','2026-11-15']}, // إدارة وصيانة النظم — الأحد
+}
+const RIYADH_OFFSET_H=3
+const subById=id=>SUBJECTS.find(s=>s.id===id)
+const toMin=t=>{const [h,m]=t.split(':').map(Number);return h*60+m}
+const tsOf=(date,time)=>{const [y,m,d]=date.split('-').map(Number);const [h,mi]=time.split(':').map(Number);return Date.UTC(y,m-1,d,h-RIYADH_OFFSET_H,mi)}
+const dayNum=(y,m,d)=>Math.floor(Date.UTC(y,m,d)/86400000)
+
+// قائمة مسطّحة بكل المحاضرات (20 محاضرة)
+const SESSIONS=[]
+Object.keys(LIVE_SESSIONS).forEach(sub=>{
+  const cfg=LIVE_SESSIONS[sub]
+  cfg.dates.forEach((date,i)=>{
+    const [y,m,d]=date.split('-').map(Number)
+    SESSIONS.push({sub,i,date,y,m:m-1,d,day:new Date(Date.UTC(y,m-1,d)).getUTCDay(),start:cfg.start,end:cfg.end,crn:cfg.crn,ts:tsOf(date,cfg.start),te:tsOf(date,cfg.end)})
+  })
+})
+
+function fmt12(t){
+  let [h,m]=t.split(':').map(Number)
+  const ap=h>=12?'م':'ص'
+  h=h%12||12
+  return h+':'+String(m).padStart(2,'0')+' '+ap
+}
+function fmtDur(mins){
+  const d=Math.floor(mins/1440), h=Math.floor((mins%1440)/60), m=mins%60
+  const p=[]
+  if(d) p.push(d===1?'يوم':d===2?'يومين':d+' أيام')
+  if(h) p.push(h===1?'ساعة':h===2?'ساعتين':h+(h<=10?' ساعات':' ساعة'))
+  if(!d && m) p.push(m===1?'دقيقة':m===2?'دقيقتين':m+(m<=10?' دقائق':' دقيقة'))
+  return p.join(' و ')||'أقل من دقيقة'
+}
+const fullDateLabel=s=>DAYS_AR[s.day]+' '+s.d+' '+MONTHS_AR[s.m]
+const shortDate=s=>s.d+'/'+(s.m+1)
+
+function riyadhToday(){
+  const r=new Date(Date.now()+RIYADH_OFFSET_H*3600000)
+  return {num:dayNum(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate())}
+}
+function computeNext(){
+  const now=Date.now()
+  const today=riyadhToday().num
+  const live=SESSIONS.find(s=>s.ts<=now&&now<s.te)||null
+  const upcoming=SESSIONS.filter(s=>s.ts>now).sort((a,b)=>a.ts-b.ts)
+  return {now,today,live,hero:live||upcoming[0]||null,after:live?upcoming[0]:upcoming[1]}
+}
+function dayLabel(s,info){
+  const diff=dayNum(s.y,s.m,s.d)-info.today
+  if(diff===0) return 'اليوم'
+  if(diff===1) return 'بكرة '+DAYS_AR[s.day]
+  return fullDateLabel(s)
+}
+function renderNext(info){
+  const box=document.getElementById('next-box')
+  const h=info.hero
+  if(!h){box.innerHTML='<div class="next-after">خلصت كل المحاضرات المباشرة المجدولة 🎉</div>';return}
+  const sub=subById(h.sub)
+  const isLive=!!info.live
+  const mins=Math.floor(((isLive?h.te:h.ts)-info.now)/60000)
+  let after=''
+  if(info.after){
+    const a=info.after, asub=subById(a.sub)
+    after='<div class="next-after">بعدها: <b style="color:'+asub.color+'">'+asub.name+'</b> — '+dayLabel(a,info)+' · '+fmt12(a.start)+'</div>'
+  }
+  box.innerHTML=
+    '<div class="next-card" style="background:'+sub.color+'">'+
+      '<div>'+
+        '<div class="next-tag">'+(isLive?'● جارية الحين':'المحاضرة الجاية')+'</div>'+
+        '<div class="next-name">'+sub.name+'</div>'+
+        '<div class="next-when">'+dayLabel(h,info)+' · '+fmt12(h.start)+' – '+fmt12(h.end)+'</div>'+
+        '<div class="next-meta">'+sub.teacher+' · CRN '+h.crn+' · المحاضرة '+(h.i+1)+' من '+LIVE_COUNT+'</div>'+
+      '</div>'+
+      '<div class="next-count"><span>'+(isLive?'تنتهي بعد':'بعد')+'</span><b>'+fmtDur(Math.max(0,mins))+'</b></div>'+
+    '</div>'+after
+}
+function renderWeek(){
+  const grid=document.getElementById('week-grid')
+  grid.innerHTML=''
+  // كل مادة لها يوم ثابت في الأسبوع (محاضرة كل أسبوعين)
+  const blocks=SUBJECTS.map(sub=>{
+    const ss=SESSIONS.filter(x=>x.sub===sub.id)
+    return {sub,day:ss[0].day,start:ss[0].start,end:ss[0].end,crn:ss[0].crn,sessions:ss}
+  })
+  for(let day=0;day<=4;day++){
+    const list=blocks.filter(b=>b.day===day).sort((a,b)=>toMin(a.start)-toMin(b.start))
+    const col=document.createElement('div')
+    col.className='day'+(list.length?'':' empty')
+    col.dataset.day=day
+    col.innerHTML='<div class="day-head"><span>'+DAYS_AR[day]+'</span><i>اليوم</i></div>'
+    const body=document.createElement('div')
+    body.className='day-body'
+    if(!list.length) body.innerHTML='<div class="day-empty">ما فيه محاضرات</div>'
+    list.forEach(bl=>{
+      const sub=bl.sub
+      const lec=document.createElement('div')
+      lec.className='lec'
+      lec.dataset.sub=sub.id
+      lec.style.background=sub.color+'12'
+      lec.style.borderRightColor=sub.color
+      lec.style.setProperty('--c',sub.color)
+      lec.innerHTML=
+        '<span class="lec-badge" style="background:'+sub.color+'"></span>'+
+        '<div class="lec-name" style="color:'+sub.color+'">'+sub.name+'</div>'+
+        '<div class="lec-time">'+fmt12(bl.start)+' – '+fmt12(bl.end)+'</div>'+
+        '<div class="lec-teacher">'+sub.teacher+' · كل أسبوعين</div>'
+      const liveBox=document.createElement('div')
+      liveBox.className='lec-live'
+      const head=document.createElement('div')
+      head.className='lec-live-head'
+      head.innerHTML='<span class="lec-live-label" style="color:'+sub.color+'">المباشرة</span><span class="lec-live-count">'+STATE[sub.id].live.filter(Boolean).length+'/'+LIVE_COUNT+'</span>'
+      liveBox.appendChild(head)
+      const strip=document.createElement('div')
+      strip.className='lv-strip'
+      bl.sessions.forEach(ss=>{
+        const cell=document.createElement('label')
+        cell.className='lv-cell'
+        cell.dataset.sub=sub.id
+        cell.dataset.i=ss.i
+        cell.title=fullDateLabel(ss)+' · '+fmt12(ss.start)
+        const cb=document.createElement('input')
+        cb.type='checkbox'
+        cb.checked=STATE[sub.id].live[ss.i]
+        cb.style.accentColor=sub.color
+        cb.addEventListener('change',()=>{
+          STATE[sub.id].live[ss.i]=cb.checked
+          save()
+          renderCards()
+          updateGlobal()
+          renderSchedule()
+        })
+        const dt=document.createElement('span')
+        dt.className='lv-date'
+        dt.textContent=shortDate(ss)
+        cell.appendChild(cb)
+        cell.appendChild(dt)
+        strip.appendChild(cell)
+      })
+      liveBox.appendChild(strip)
+      lec.appendChild(liveBox)
+      body.appendChild(lec)
+    })
+    col.appendChild(body)
+    grid.appendChild(col)
+  }
+}
+// تلوين حسب الوقت: الجاية/الحين، وتاريخ فات وما سجلته = أحمر
+function markWeek(info){
+  document.querySelectorAll('#week-grid .day').forEach(d=>{
+    const dn=Number(d.dataset.day)
+    d.classList.toggle('today',SESSIONS.some(s=>s.day===dn&&dayNum(s.y,s.m,s.d)===info.today))
+  })
+  document.querySelectorAll('#week-grid .lec').forEach(l=>{
+    const isLive=info.live&&info.live.sub===l.dataset.sub
+    const isNext=!info.live&&info.hero&&info.hero.sub===l.dataset.sub
+    l.classList.toggle('is-live',!!isLive)
+    l.classList.toggle('is-next',!!isNext)
+    l.querySelector('.lec-badge').textContent=isLive?'الحين':'الجاية'
+  })
+  document.querySelectorAll('#week-grid .lv-cell').forEach(c=>{
+    const sub=subById(c.dataset.sub)
+    const i=Number(c.dataset.i)
+    const ss=SESSIONS.find(x=>x.sub===sub.id&&x.i===i)
+    const ticked=STATE[sub.id].live[i]
+    const dt=c.querySelector('.lv-date')
+    const isHero=info.hero&&info.hero.sub===ss.sub&&info.hero.i===ss.i
+    dt.style.fontWeight='400'
+    if(ticked){dt.style.color=sub.color}
+    else if(ss.te<=info.now){dt.style.color='#b3261e';dt.style.fontWeight='700'} // فاتت وما سجلتها
+    else if(isHero){dt.style.color=sub.color;dt.style.fontWeight='700'}
+    else{dt.style.color='#aaa'}
+  })
+}
+function tick(){
+  const info=computeNext()
+  renderNext(info)
+  markWeek(info)
+}
+function renderSchedule(){
+  renderWeek()
+  tick()
+}
+setInterval(tick,30000)
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()})
+
+/* ===================== المزامنة بين الأجهزة (Firebase) ===================== */
+// ملاحظة: هذي القيم مو سرية. الحماية الفعلية من "قواعد الأمان" في Firestore.
+const FB_VERSION='12.19.0'
+const FIREBASE_CONFIG={
+  apiKey:'AIzaSyBOAwmPFc6c5cU4a0HAfobg0Y0WeJQ9h1M',
+  authDomain:'college-f2d9a.firebaseapp.com',
+  projectId:'college-f2d9a',
+  storageBucket:'college-f2d9a.firebasestorage.app',
+  messagingSenderId:'1096865506361',
+  appId:'1:1096865506361:web:675ecbe610eb61050819e8'
+}
+const SYNC_TIMEOUT_MS=10000
+const SYNC={authReady:false,fs:null,au:null,auth:null,db:null,ref:null,unsub:null,uid:null,ready:false,last:{}}
+
+// كل تشيك = مفتاح مستقل، عشان تعديلات الأجهزة تندمج بدل ما تمسح بعض
+function flattenState(S){
+  const out={}
+  for(const id in S){
+    const d=S[id]
+    d.units.forEach((u,c)=>u.forEach((v,i)=>{out[id+'_u_'+c+'_'+i]=v}))
+    d.discussions.forEach((v,c)=>{out[id+'_d_'+c]=v})
+    d.homework.forEach((v,i)=>{out[id+'_h_'+i]=v})
+    d.live.forEach((v,i)=>{out[id+'_l_'+i]=v})
+    out[id+'_rel']=d.released
+  }
+  return out
+}
+function setByKey(k,v){
+  const p=k.split('_'), d=STATE[p[0]]
+  if(!d) return false
+  const t=p[1]
+  if(t==='u'){const c=+p[2],i=+p[3];if(d.units[c]&&i>=0&&i<3&&typeof v==='boolean'){d.units[c][i]=v;return true}}
+  else if(t==='d'){const c=+p[2];if(c>=0&&c<d.discussions.length&&typeof v==='boolean'){d.discussions[c]=v;return true}}
+  else if(t==='h'){const i=+p[2];if(i>=0&&i<d.homework.length&&typeof v==='boolean'){d.homework[i]=v;return true}}
+  else if(t==='l'){const i=+p[2];if(i>=0&&i<d.live.length&&typeof v==='boolean'){d.live[i]=v;return true}}
+  else if(t==='rel'){if(typeof v==='number'){d.released=Math.max(0,Math.min(CHAPTER_COUNT,Math.round(v)));return true}}
+  return false
+}
+function applyCells(cells){
+  const cur=flattenState(STATE)
+  let changed=false
+  for(const k in cells){
+    if(!(k in cur)||cur[k]===cells[k]) continue
+    if(setByKey(k,cells[k])) changed=true
+  }
+  return changed
+}
+// دمج "الأقوى يبقى": تشيك موجود بأي طرف يبقى، وعدد الفصول النازلة = الأكبر
+function unionCells(a,b){
+  const out={}
+  for(const k in a){
+    out[k]=typeof a[k]==='boolean' ? (a[k]||b[k]===true) : Math.max(a[k],typeof b[k]==='number'?b[k]:0)
+  }
+  return out
+}
+function persistLocal(){try{localStorage.setItem(SKEY,JSON.stringify(STATE))}catch(e){}}
+function refreshUI(){renderCards();updateGlobal();renderSchedule()}
+
+function setSyncStatus(kind,detail){
+  const chip=document.getElementById('sync-chip')
+  const map={
+    off:['المزامنة: غير مفعّلة','',''],
+    syncing:['↻ جارٍ المزامنة…','warn',''],
+    ok:['● متزامن','ok',''],
+    offline:['○ بدون اتصال — يتزامن لاحقاً','warn',''],
+    needhttps:['⚠ افتح من رابط الموقع (https) عشان تتزامن','warn','الصفحة مفتوحة من مصدر محلي ('+location.protocol+') والمزامنة تحتاج رابط موقع حقيقي'],
+    error:['⚠ '+(detail||'خطأ مزامنة'),'err',detail||'']
+  }
+  const m=map[kind]
+  chip.textContent=m[0]
+  chip.className='sync-chip '+m[1]
+  chip.title=m[2]
+}
+function errText(e){
+  const code=(e&&e.code)||''
+  if(code==='permission-denied') return 'permission-denied: انشر قواعد الأمان في Firestore (تبويب Rules)'
+  if(code==='not-found'||code==='failed-precondition') return code+': أنشئ قاعدة Firestore من الكونسول (Build ← Firestore Database)'
+  return code||String(e&&e.message||e)
+}
+
+function pushChanges(){
+  if(!SYNC.ready) return
+  const now=flattenState(STATE), diff={}
+  let n=0
+  for(const k in now) if(now[k]!==SYNC.last[k]){diff[k]=now[k];n++}
+  if(!n) return
+  SYNC.last=now
+  setSyncStatus('syncing')
+  SYNC.fs.setDoc(SYNC.ref,{cells:diff},{merge:true}).catch(e=>setSyncStatus('error',errText(e)))
+}
+window.__syncPush=pushChanges
+
+function firstSync(remote){
+  const flag='kfu_sync_init_'+SYNC.uid
+  const cur=flattenState(STATE)
+  if(remote===null){
+    // وثيقة جديدة: نرفع كل شي
+    SYNC.last=cur; SYNC.ready=true
+    SYNC.fs.setDoc(SYNC.ref,{cells:cur}).catch(e=>setSyncStatus('error',errText(e)))
+  }else if(!localStorage.getItem(flag)){
+    // أول مرة لهذا الجهاز: ندمج بدون ما نخسر أي تشيك من الطرفين
+    const merged=unionCells(cur,remote), diff={}
+    for(const k in merged) if(merged[k]!==remote[k]) diff[k]=merged[k]
+    applyCells(merged)
+    SYNC.last=flattenState(STATE); SYNC.ready=true
+    if(Object.keys(diff).length) SYNC.fs.setDoc(SYNC.ref,{cells:diff},{merge:true}).catch(e=>setSyncStatus('error',errText(e)))
+    persistLocal(); refreshUI()
+  }else{
+    // جهاز معروف: السيرفر هو المرجع
+    applyCells(remote)
+    SYNC.last=flattenState(STATE); SYNC.ready=true
+    persistLocal(); refreshUI()
+  }
+  try{localStorage.setItem(flag,'1')}catch(e){}
+}
+function onSnap(snap){
+  const remote=snap.exists()?(snap.data().cells||{}):null
+  if(!SYNC.ready){
+    firstSync(remote)
+  }else if(remote){
+    if(applyCells(remote)){persistLocal();refreshUI()}
+    for(const k in remote) if(k in SYNC.last) SYNC.last[k]=remote[k]
+  }
+  const m=snap.metadata
+  if(!navigator.onLine||m.fromCache) setSyncStatus('offline')
+  else if(m.hasPendingWrites) setSyncStatus('syncing')
+  else setSyncStatus('ok')
+}
+function startSync(user){
+  stopSync()
+  SYNC.uid=user.uid
+  SYNC.ref=SYNC.fs.doc(SYNC.db,'users',user.uid)
+  setSyncStatus('syncing')
+  SYNC.unsub=SYNC.fs.onSnapshot(SYNC.ref,{includeMetadataChanges:true},onSnap,e=>setSyncStatus('error',errText(e)))
+  updateAuthBtn(user)
+}
+function stopSync(){
+  if(SYNC.unsub){SYNC.unsub();SYNC.unsub=null}
+  SYNC.ready=false; SYNC.last={}
+}
+function updateAuthBtn(user){
+  const b=document.getElementById('auth-btn')
+  b.style.display=''
+  if(user){
+    b.textContent='خروج'
+    b.onclick=()=>{
+      try{localStorage.removeItem('kfu_sync_init_'+SYNC.uid)}catch(e){}
+      SYNC.au.signOut(SYNC.auth)
+    }
+  }else{
+    b.textContent='تسجيل الدخول'
+    b.onclick=()=>{document.getElementById('login-msg').textContent='';document.getElementById('login-dlg').showModal()}
+  }
+}
+const AUTH_ERR={
+  'auth/invalid-credential':'الإيميل أو كلمة السر غلط',
+  'auth/invalid-email':'صيغة الإيميل غير صحيحة',
+  'auth/user-disabled':'هذا الحساب معطّل',
+  'auth/too-many-requests':'محاولات كثيرة، انتظر شوي وجرّب مرة ثانية',
+  'auth/network-request-failed':'ما فيه اتصال بالإنترنت',
+  'auth/operation-not-allowed':'الدخول بالإيميل غير مفعّل: Firebase ← Authentication ← Sign-in method'
+}
+function wireLoginForm(){
+  const dlg=document.getElementById('login-dlg')
+  document.getElementById('login-cancel').onclick=()=>dlg.close()
+  document.getElementById('login-form').onsubmit=async ev=>{
+    ev.preventDefault()
+    const msg=document.getElementById('login-msg'), btn=document.getElementById('login-submit')
+    msg.textContent=''; btn.disabled=true; btn.textContent='…'
+    try{
+      await SYNC.au.signInWithEmailAndPassword(SYNC.auth,document.getElementById('login-email').value.trim(),document.getElementById('login-pass').value)
+      document.getElementById('login-pass').value=''
+      dlg.close()
+    }catch(e){
+      msg.textContent=AUTH_ERR[e.code]||('خطأ: '+(e.code||e.message))
+    }finally{btn.disabled=false;btn.textContent='دخول'}
+  }
+}
+async function initSync(){
+  wireLoginForm()
+  // الصفحة المفتوحة من تطبيق (مثل content:// من تيليجرام) ما تدعم التخزين اللي يحتاجه Firebase
+  const proto=location.protocol
+  const weird=!(proto==='http:'||proto==='https:'||proto==='file:')
+  if(weird) setSyncStatus('needhttps')
+  const watchdog=setTimeout(()=>{
+    if(!SYNC.authReady) setSyncStatus(weird?'needhttps':'error','ما استجاب Firebase خلال 10 ثواني. تأكد من الإنترنت وافتح الصفحة من رابط https')
+  },SYNC_TIMEOUT_MS)
+  try{
+    const base='https://www.gstatic.com/firebasejs/'+FB_VERSION+'/'
+    const [appM,authM,fsM]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')])
+    const app=appM.initializeApp(FIREBASE_CONFIG)
+    SYNC.auth=authM.getAuth(app)
+    try{
+      SYNC.db=fsM.initializeFirestore(app,{localCache:fsM.persistentLocalCache({tabManager:fsM.persistentMultipleTabManager()})})
+    }catch(e){
+      SYNC.db=fsM.getFirestore(app) // بدون كاش دائم (مثلاً تصفح خاص)
+    }
+    SYNC.fs=fsM; SYNC.au=authM
+    authM.onAuthStateChanged(SYNC.auth,user=>{
+      SYNC.authReady=true; clearTimeout(watchdog)
+      if(user){startSync(user)}
+      else{stopSync();setSyncStatus('off');updateAuthBtn(null)}
+    })
+  }catch(e){
+    clearTimeout(watchdog)
+    setSyncStatus('error','تعذّر تحميل Firebase، تأكد من الإنترنت (التطبيق يشتغل محلياً)')
+  }
+}
+
+/* ===== نسخ احتياطي / نقل بيانات ===== */
+function openBackup(){
+  document.getElementById('backup-text').value=''
+  document.getElementById('bk-msg').textContent=''
+  document.getElementById('backup-dlg').showModal()
+}
+document.getElementById('bk-close').onclick=()=>document.getElementById('backup-dlg').close()
+document.getElementById('bk-show').onclick=async()=>{
+  const ta=document.getElementById('backup-text'), msg=document.getElementById('bk-msg')
+  ta.value=JSON.stringify(STATE)
+  ta.select()
+  msg.className='dlg-msg'
+  try{await navigator.clipboard.writeText(ta.value);msg.className='dlg-msg ok';msg.textContent='انسخ النص: تم نسخه للحافظة، احفظه بملف أو ابعته لنفسك.'}
+  catch(e){msg.textContent='انسخ النص يدوياً من المربع.'}
+}
+document.getElementById('bk-merge').onclick=()=>{
+  const msg=document.getElementById('bk-msg')
+  msg.className='dlg-msg'
+  try{
+    const parsed=JSON.parse(document.getElementById('backup-text').value)
+    const tmp=buildFresh()
+    for(const id in tmp){ if(parsed[id]&&typeof parsed[id]==='object') Object.assign(tmp[id],parsed[id]) }
+    const merged=unionCells(flattenState(STATE),flattenState(tmp))
+    const changed=applyCells(merged)
+    if(changed){save();refreshUI()}
+    msg.className='dlg-msg ok'
+    msg.textContent=changed?'تم الدمج.':'ما في شي جديد للدمج.'
+  }catch(e){
+    msg.textContent='النص مو صالح. تأكد إنك نسخته كامل.'
+  }
+}
+
+renderCards()
+updateGlobal()
+renderSchedule()
+initSync()
+</script>
+</body>
+</html>
