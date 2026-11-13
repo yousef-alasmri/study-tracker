@@ -275,6 +275,8 @@ select.inp option{background:#161b0f}
 
 .site-nav{gap:2px!important}.site-nav a{display:flex!important;flex-direction:column!important;align-items:center;gap:2px;font-size:10.5px!important;font-weight:600;padding:7px 1px!important;line-height:1.25;white-space:nowrap!important;min-width:0}.site-nav a i{font-style:normal;font-size:17px;line-height:1}
 
+.site-nav{gap:2px!important;max-width:620px!important}.site-nav a{display:flex!important;flex-direction:column!important;align-items:center;gap:2px;font-size:10px!important;font-weight:600;padding:7px 1px!important;line-height:1.25;white-space:nowrap!important;min-width:0;position:relative}.site-nav a i{font-style:normal;font-size:16px;line-height:1}
+
 /* ===== خاص بالغذاء ===== */
 .site-nav{max-width:640px!important;gap:2px!important}
 .site-nav a{font-size:10.8px!important;padding:8px 0!important;white-space:nowrap!important}
@@ -297,6 +299,15 @@ select.inp option{background:#161b0f}
 .shop.bought .chk{background:var(--emerald);border-color:transparent}.shop.bought .mid{opacity:.5;text-decoration:line-through}
 dialog#pf{width:min(520px,100vw)}
 .pos{color:#3ddc97}.neg{color:#ff7a6e}
+/* ===== النظام الجديد: أطباق وصحون ===== */
+.plate{margin:6px 0 2px}.plate .pl{display:flex;justify-content:space-between;padding:6px 0;font-size:14.5px;border-bottom:1px dashed rgba(255,255,255,.08)}.plate .pl:last-child{border:none}.plate .pl b{font-variant-numeric:tabular-nums}
+.dish{display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(182,227,84,.14);color:var(--emerald);font-size:12.5px;font-weight:600;margin:2px 0 2px 6px}
+.mealc{margin-bottom:12px}.mealc.dn{border-color:rgba(61,220,151,.5)}
+.cat-h{margin:16px 4px 6px;font-size:13px;color:var(--muted);font-weight:600}
+.row.shop.have{opacity:.45}
+.row.shop.bought .t,.row.shop.bought .s{text-decoration:none!important;opacity:1!important}
+.catbar{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px}.catbar .nm{width:104px;flex-shrink:0}.catbar .bar{flex:1;margin:0}.catbar b{width:64px;text-align:end;font-variant-numeric:tabular-nums}
+
 </style>
 </head>
 <body>
@@ -342,7 +353,7 @@ var GATE=(function(){
 document.getElementById('gate-reload').onclick=function(){location.reload()};
 </script>
 <div class="app">
-  <nav class="site-nav" aria-label="الأقسام"><a href="index.html"><i>📚</i>الجامعة</a><a href="finance.html"><i>💰</i>المالية</a><a href="fitness.html"><i>💪</i>التمارين</a><a class="on" href="nutrition.html"><i>🍽️</i>الغذاء</a><a href="deen.html"><i>🕌</i>الدين</a><a href="tech.html"><i>🛠️</i>التقنية</a></nav>
+  <nav class="site-nav" aria-label="الأقسام"><a href="plan.html"><i>📅</i>اليومية</a><a href="index.html"><i>📚</i>الجامعة</a><a href="finance.html"><i>💰</i>المالية</a><a href="fitness.html"><i>💪</i>التمارين</a><a class="on" href="nutrition.html"><i>🍽️</i>الغذاء</a><a href="deen.html"><i>🕌</i>الدين</a><a href="tech.html"><i>🛠️</i>التقنية</a></nav>
   <header class="top">
     <div class="brand"><div class="logo" style="background:linear-gradient(135deg,#cdf06e,#86b82a);color:#101a02;box-shadow:0 6px 22px rgba(182,227,84,.3)">🍽️</div><div><div class="brand-t">الغذاء</div><div class="brand-s" id="sub">خطة أكل بميزانيتك</div></div></div>
     <div class="top-actions">
@@ -1340,10 +1351,48 @@ function startCross(){
 function stopCross(){SYNC.cross.forEach(u=>u());SYNC.cross=[];X.fin.lm=X.fin.lt=X.fit.lm=X.fit.lb=false;X.rel.l=false}
 
 
+function applyHash(){const h=(location.hash||'').slice(1).split('-');if(h[0]&&TABS.some(t=>t[0]===h[0])){ui.tab=h[0];if(h[1]&&typeof ui.wt!=='undefined')ui.wt=h[1];return true}return false}
+applyHash();addEventListener('hashchange',()=>{if(applyHash()){render(false);window.scrollTo({top:0})}})
 render(false)
 initSync()
 
 </script>
 <script>/* تحذير اسم الملف: يظهر بس لو اسم هذا الملف غلط */(function(){var exp='nutrition.html',seg='';try{seg=decodeURIComponent(location.pathname.split('/').pop()||'')}catch(e){}var ok=!seg||seg===exp||(location.protocol!=='file:'&&seg===exp.replace('.html',''));if(ok)return;var d=document.createElement('div');d.className='no-print';d.setAttribute('role','alert');d.style.cssText='position:relative;z-index:2147483647;background:#b3261e;color:#fff;padding:12px 14px;font:600 13px/1.7 system-ui,sans-serif;text-align:center;direction:rtl';d.textContent='⚠ اسم هذا الملف «'+seg+'» غلط. لازم يكون «'+exp+'» بالضبط، وإلا زر التنقل بين الأقسام ما يشتغل. غيّر اسمه (كليك يمين ← Rename).';document.body.insertBefore(d,document.body.firstChild)})();</script>
-</body>
+<!--PB--><style id="pb-css">
+.site-nav a{position:relative}
+.site-nav .tri{position:absolute;top:0;inset-inline-end:4px;font-size:9px;line-height:1;color:#1c0f00;background:#ffb454;border-radius:6px;padding:2px 4px;font-weight:800;box-shadow:0 0 0 2px rgba(0,0,0,.4);animation:pbp 1.6s infinite}
+@keyframes pbp{50%{transform:scale(1.18)}}
+#pbp{position:fixed;inset-inline:10px;top:74px;z-index:90;max-height:72vh;overflow:auto;padding:14px;border-radius:18px;background:rgba(20,18,34,.98);border:1px solid rgba(255,180,84,.65);box-shadow:0 16px 40px rgba(0,0,0,.6);direction:rtl;font-family:inherit;color:#f1effa}
+#pbp h4{margin:0 0 6px;font-size:15px}#pbp .it{padding:10px 0;border-top:1px solid rgba(255,255,255,.1)}#pbp .it b{font-size:14px;line-height:1.6}#pbp .it small{display:block;color:#a39fc0;font-size:12px;line-height:1.7;margin-top:2px}
+#pbp .bs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}#pbp button,#pbp a{font:inherit;font-size:12.5px;padding:7px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:inherit;text-decoration:none;cursor:pointer}#pbp a.go{background:#ffb454;color:#1c0f00;border-color:transparent;font-weight:700}
+</style><script>window.PB_DONE=function(i){var p=i.id.split(':'),d=p[0],k=p.slice(1).join(':')
+ if(k.indexOf('meal:')===0)return REAL.log.some(function(l){return l.date===d&&l.meal===k.slice(5)})
+ if(k==='shop')return REAL.buys.some(function(b){return b.date===d})
+ return false};(function(){
+ if(window.PB)return
+ var P=location.pathname.split('/').pop()||'index.html',SEC=(P.replace('.html','')||'index'),SK='plan_state',DK='plan_done',ZK='plan_snooze'
+ var NAMES={deen:'الدين',fitness:'التمارين',nutrition:'الغذاء',tech:'التقنية',index:'الجامعة',finance:'المالية'}
+ function jget(k,d){try{var v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v}catch(e){return d}}
+ function jset(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+ function items(){var st=jget(SK,null);if(!st||!st.items)return[];var now=Date.now(),dm=jget(DK,{}),sz=jget(ZK,{});return st.items.filter(function(i){return !dm[i.id]&&!(sz[i.id]>now)&&now>=i.from-10*60000&&now<=i.to+30*60000})}
+ function check(){if(typeof window.PB_DONE!=='function')return;var st=jget(SK,null);if(!st||!st.items)return;var dm=jget(DK,{}),ch=false
+  st.items.forEach(function(i){if(i.sec===SEC&&!dm[i.id]){var ok=false;try{ok=window.PB_DONE(i)}catch(e){}if(ok){dm[i.id]=Date.now();ch=true}}});if(ch)jset(DK,dm)}
+ function paint(){var it=items();document.querySelectorAll('.site-nav a').forEach(function(a){var h=(a.getAttribute('href')||'').replace('.html',''),n=it.filter(function(i){return i.sec===h}).length,tri=a.querySelector('.tri')
+   if(n){if(!tri){tri=document.createElement('b');tri.className='tri';a.appendChild(tri)}tri.textContent='▲'+(n>1?n:'');tri.setAttribute('data-sec',h)}else if(tri)tri.remove()})
+   var pn=document.getElementById('pbp');if(pn&&pn.dataset.sec)openPanel(pn.dataset.sec,true)}
+ function mins(i){var d=Math.round((i.from-Date.now())/60000);return d>1?'بعد '+d+' د':(Date.now()>i.to?'متأخر':'الحين')}
+ function openPanel(sec,keep){var it=items().filter(function(i){return i.sec===sec}),pn=document.getElementById('pbp')
+  if(!it.length){if(pn)pn.remove();return}
+  if(!pn){pn=document.createElement('div');pn.id='pbp';document.body.appendChild(pn)}pn.dataset.sec=sec
+  pn.innerHTML='<h4>▲ '+(NAMES[sec]||sec)+': وش تسوي جواه</h4>'+it.map(function(i){return '<div class="it"><b>'+i.label+'</b> <small>'+mins(i)+(i.detail?' · '+i.detail:'')+'</small><div class="bs"><a class="go" href="'+i.link+'">افتح</a><button data-pbd="'+i.id+'">تم ✓</button><button data-pbz="'+i.id+'">بعد 30 د</button></div></div>'}).join('')+'<div class="bs"><button data-pbx="1">إغلاق</button></div>'}
+ document.addEventListener('click',function(e){var t=e.target
+  var tri=t.closest&&t.closest('.site-nav .tri');if(tri){e.preventDefault();e.stopPropagation();var pn=document.getElementById('pbp');if(pn&&pn.dataset.sec===tri.getAttribute('data-sec'))pn.remove();else openPanel(tri.getAttribute('data-sec'));return}
+  if(t.closest&&t.closest('[data-pbx]')){var p=document.getElementById('pbp');if(p)p.remove();return}
+  var d=t.closest&&t.closest('[data-pbd]');if(d){var dm=jget(DK,{});dm[d.getAttribute('data-pbd')]=Date.now();jset(DK,dm);paint();return}
+  var z=t.closest&&t.closest('[data-pbz]');if(z){var sz=jget(ZK,{});sz[z.getAttribute('data-pbz')]=Date.now()+30*60000;jset(ZK,sz);paint();return}
+ },true)
+ window.PB={refresh:function(){check();paint()},items:items}
+ window.addEventListener('storage',function(){paint()});setInterval(function(){check();paint()},20000)
+ if(document.readyState!=='loading')window.PB.refresh();else document.addEventListener('DOMContentLoaded',function(){window.PB.refresh()})
+})();</script><!--/PB--></body>
 </html>

@@ -275,6 +275,8 @@ select.inp option{background:#171a33}
 
 .site-nav{gap:2px!important}.site-nav a{display:flex!important;flex-direction:column!important;align-items:center;gap:2px;font-size:10.5px!important;font-weight:600;padding:7px 1px!important;line-height:1.25;white-space:nowrap!important;min-width:0}.site-nav a i{font-style:normal;font-size:17px;line-height:1}
 
+.site-nav{gap:2px!important;max-width:620px!important}.site-nav a{display:flex!important;flex-direction:column!important;align-items:center;gap:2px;font-size:10px!important;font-weight:600;padding:7px 1px!important;line-height:1.25;white-space:nowrap!important;min-width:0;position:relative}.site-nav a i{font-style:normal;font-size:16px;line-height:1}
+
 /* ===== خاص بالدين ===== */
 .site-nav{max-width:560px!important}.site-nav a{font-size:12px!important;padding:9px 3px!important}
 .pos{color:#3ddc97}.neg{color:#ff7a6e}
@@ -335,7 +337,7 @@ var GATE=(function(){
 document.getElementById('gate-reload').onclick=function(){location.reload()};
 </script>
 <div class="app">
-  <nav class="site-nav" aria-label="الأقسام"><a href="index.html"><i>📚</i>الجامعة</a><a href="finance.html"><i>💰</i>المالية</a><a href="fitness.html"><i>💪</i>التمارين</a><a href="nutrition.html"><i>🍽️</i>الغذاء</a><a class="on" href="deen.html"><i>🕌</i>الدين</a><a href="tech.html"><i>🛠️</i>التقنية</a></nav>
+  <nav class="site-nav" aria-label="الأقسام"><a href="plan.html"><i>📅</i>اليومية</a><a href="index.html"><i>📚</i>الجامعة</a><a href="finance.html"><i>💰</i>المالية</a><a href="fitness.html"><i>💪</i>التمارين</a><a href="nutrition.html"><i>🍽️</i>الغذاء</a><a class="on" href="deen.html"><i>🕌</i>الدين</a><a href="tech.html"><i>🛠️</i>التقنية</a></nav>
   <header class="top">
     <div class="brand"><div class="logo" style="background:linear-gradient(135deg,#f4d98c,#c69a2e);color:#1c1403;box-shadow:0 6px 22px rgba(233,196,106,.3)">🕌</div><div><div class="brand-t">الدين</div><div class="brand-s" id="sub">قرآن · سنن · أذكار · صيام</div></div></div>
     <div class="top-actions">
@@ -432,7 +434,7 @@ const DEF_SET={
  fast:{days:[1,4],beed:false},qada:0,
  off:{fajr:0,sunrise:0,dhuhr:0,asr:0,maghrib:0,isha:0},
  city:{lat:26.4207,lon:50.0888,name:'الدمام'},
- life:{bed:'00:30',fajr:'04:40',wake:'07:00',workS:'16:00',workE:'24:00',off:1,gymS:'14:00',gymM:105},
+ life:{bed:'00:30',fajr:'04:40',wake:'07:00',workS:'16:00',workE:'24:00',off:1,gymS:'14:00',gymM:105,work:true},
  setup:false,sv:2
 }
 function mergeSettings(o){
@@ -637,7 +639,7 @@ const UNI_SESS={}
 function constraints(date){
   const dow=dowOf(date),L=S().life,out=[]
   {const b=hm2m(L.bed),w=hm2m(L.wake);if(b<w)out.push({n:'نومك',s:b,e:w});else{out.push({n:'نومك',s:0,e:w});out.push({n:'نومك',s:b,e:1440})}}
-  if(dow!==L.off)out.push({n:'الدوام',s:hm2m(L.workS),e:hm2m(L.workE)||1440})
+  if(L.work!==false&&dow!==L.off)out.push({n:'الدوام',s:hm2m(L.workS),e:hm2m(L.workE)||1440})
   if(fitDays().includes(dow))out.push({n:'التمرين',s:hm2m(L.gymS),e:hm2m(L.gymS)+L.gymM})
   ;(UNI_SESS[date]||[]).forEach(([a,b])=>out.push({n:'الجامعة',s:hm2m(a),e:hm2m(b)}))
   const t=prayerTimes(date)
@@ -844,7 +846,7 @@ function viewSched(){
   <div class="grid g2"><div class="card"><h3>التزامك</h3><div class="d-sum"><div class="stat"><div class="l">بالموعد (14 يوم)</div><div class="v ${hsC.pct>=70?'pos':''}">${int(hsC.pct)}٪</div></div><div class="stat"><div class="l">${hsC.ok} من ${hsC.tot}</div></div></div>${bar(hsC.pct)}</div>
   <div class="card"><h3>تنبيهات التقويم</h3><div class="note" style="margin:0 0 10px">١) <b>المواعيد الثابتة</b> (تتكرر أسبوعياً): القرآن والنوم (${t12(L.bed)}) وقيام الفجر (${t12(L.fajr)}) والوتر (${t12(A.qiyamT)}).</div><button class="btn pri" style="width:100%" data-act="ics">⬇ المواعيد الثابتة (.ics)</button>
    <div class="note" style="margin:12px 0 10px">٢) <b>مواقيت السنن</b> بالدقائق لـ45 يوم (تتغير مع الفصل، جدّده كل شهر).</div><button class="btn" style="width:100%" data-act="ics2">⬇ مواقيت السنن (45 يوم)</button></div></div>
-  <div class="card" style="margin-top:14px"><h3>قيودي (للتنبيه بالتقاطع)</h3><div class="note" style="margin:0 0 8px">الدوام ${t12(L.workS)}–${t12(L.workE)} (الإجازة: ${DAYS[L.off]}) · التمرين ${t12(L.gymS)} (${L.gymM} د) · النوم ${t12(L.bed)}–${t12(L.wake)} · محاضرات الجامعة المباشرة حسب جدولها (آخرها 16 نوفمبر). القاعدة: لو تقاطع الموعد، القرآن أول.</div><button class="btn" data-act="life">تعديل القيود</button></div>`
+  <div class="card" style="margin-top:14px"><h3>قيودي (للتنبيه بالتقاطع)</h3><div class="note" style="margin:0 0 8px">${L.work===false?'الدوام <b>مو شغّال</b>':'الدوام '+t12(L.workS)+'–'+t12(L.workE)+' (الإجازة: '+DAYS[L.off]+')'} · التمرين ${t12(L.gymS)} (${L.gymM} د) · النوم ${t12(L.bed)}–${t12(L.wake)} · محاضرات الجامعة المباشرة حسب جدولها (آخرها 16 نوفمبر). القاعدة: لو تقاطع الموعد، القرآن أول.</div><button class="btn" data-act="life">تعديل القيود</button></div>`
 }
 function viewWorship(){
   const t=todayStr(),seg=`<div class="seg" style="margin-bottom:14px">${[['sunan','🕌 السنن'],['qiyam','🌙 القيام'],['adhkar','📿 الأذكار'],['fast','⏳ الصيام']].map(([k,l])=>`<button type="button" class="${ui.wt===k?'on':''}" data-act="wt" data-id="${k}">${l}</button>`).join('')}</div>`
@@ -1067,6 +1069,7 @@ function formLife(){
   const L=S().life,tv=x=>x==='24:00'?'00:00':x
   openForm({title:'قيودي',sub:'أوقاتك الثابتة. التطبيق ينبّهك لو تقاطع موعد قرآنك مع شي منها. اختر الوقت من المنتقي.',fields:[
    {name:'bed',label:'متى تنام (وقت النوم المستهدف)',type:'time',value:tv(L.bed)},{name:'wake',label:'متى تقوم من النوم الكامل',type:'time',value:tv(L.wake),hint:'مواعيد الصباح مبنية على هالوقت'},{name:'fajr',label:'قيام الفجر (للتنبيه)',type:'time',value:tv(L.fajr)},
+   {name:'work',label:'عندك دوام حالياً؟',type:'seg',value:L.work===false?'0':'1',options:[{v:'1',l:'نعم'},{v:'0',l:'لا، مرتاح'}],hint:'لو لا: ما يحسب دوام بالتعارضات ولا باليومية.'},
    {name:'workS',label:'بداية الدوام',type:'time',value:tv(L.workS)},{name:'workE',label:'نهاية الدوام',type:'time',value:tv(L.workE),hint:'12:00 ص = منتصف الليل'},
    {name:'off',label:'يوم إجازتك الثابت (بدون دوام)',type:'select',value:String(L.off),options:DAYS.map((n,i)=>({v:String(i),l:n}))},
    {name:'gymS',label:'وقت وصولك الجيم (بأيام التمرين)',type:'time',value:tv(L.gymS)},{name:'gymM',label:'مدة التمرين (دقيقة)',type:'dec',value:String(L.gymM)}
@@ -1074,7 +1077,7 @@ function formLife(){
    for(const k of ['bed','wake','fajr','workS','gymS'])if(isNaN(hm2m(v[k])))return 'اختر الأوقات من المنتقي'
    const wE=(v.workE==='00:00'&&hm2m(v.workS)>0)?1440:hm2m(v.workE);if(isNaN(wE))return 'اختر نهاية الدوام'
    const g=parseDec(v.gymM);if(!(g>=20&&g<=240))return 'مدة التمرين بين 20 و240'
-   Object.assign(S().life,{bed:m2hm(hm2m(v.bed)),wake:m2hm(hm2m(v.wake)),fajr:m2hm(hm2m(v.fajr)),workS:m2hm(hm2m(v.workS)),workE:wE>=1440?'24:00':m2hm(wE),off:+v.off,gymS:m2hm(hm2m(v.gymS)),gymM:g})
+   Object.assign(S().life,{work:v.work!=='0',bed:m2hm(hm2m(v.bed)),wake:m2hm(hm2m(v.wake)),fajr:m2hm(hm2m(v.fajr)),workS:m2hm(hm2m(v.workS)),workE:wE>=1440?'24:00':m2hm(wE),off:+v.off,gymS:m2hm(hm2m(v.gymS)),gymM:g})
    persist();render();toast('تم حفظ القيود ✓')
   }})
 }
@@ -1365,10 +1368,51 @@ function startCross(){
 function stopCross(){SYNC.cross.forEach(u=>u());SYNC.cross=[];X.fit.lm=false}
 
 
+function applyHash(){const h=(location.hash||'').slice(1).split('-');if(h[0]&&TABS.some(t=>t[0]===h[0])){ui.tab=h[0];if(h[1]&&typeof ui.wt!=='undefined')ui.wt=h[1];return true}return false}
+applyHash();addEventListener('hashchange',()=>{if(applyHash()){render(false);window.scrollTo({top:0})}})
 render(false)
 initSync()
 
 </script>
 <script>/* تحذير اسم الملف */(function(){var exp='deen.html',seg='';try{seg=decodeURIComponent(location.pathname.split('/').pop()||'')}catch(e){}var ok=!seg||seg===exp||(location.protocol!=='file:'&&seg===exp.replace('.html',''));if(ok)return;var d=document.createElement('div');d.className='no-print';d.setAttribute('role','alert');d.style.cssText='position:relative;z-index:2147483647;background:#b3261e;color:#fff;padding:12px 14px;font:600 13px/1.7 system-ui,sans-serif;text-align:center;direction:rtl';d.textContent='⚠ اسم هذا الملف «'+seg+'» غلط. لازم يكون «'+exp+'» بالضبط، وإلا زر التنقل بين الأقسام ما يشتغل. غيّر اسمه (كليك يمين ← Rename).';document.body.insertBefore(d,document.body.firstChild)})();</script>
-</body>
+<!--PB--><style id="pb-css">
+.site-nav a{position:relative}
+.site-nav .tri{position:absolute;top:0;inset-inline-end:4px;font-size:9px;line-height:1;color:#1c0f00;background:#ffb454;border-radius:6px;padding:2px 4px;font-weight:800;box-shadow:0 0 0 2px rgba(0,0,0,.4);animation:pbp 1.6s infinite}
+@keyframes pbp{50%{transform:scale(1.18)}}
+#pbp{position:fixed;inset-inline:10px;top:74px;z-index:90;max-height:72vh;overflow:auto;padding:14px;border-radius:18px;background:rgba(20,18,34,.98);border:1px solid rgba(255,180,84,.65);box-shadow:0 16px 40px rgba(0,0,0,.6);direction:rtl;font-family:inherit;color:#f1effa}
+#pbp h4{margin:0 0 6px;font-size:15px}#pbp .it{padding:10px 0;border-top:1px solid rgba(255,255,255,.1)}#pbp .it b{font-size:14px;line-height:1.6}#pbp .it small{display:block;color:#a39fc0;font-size:12px;line-height:1.7;margin-top:2px}
+#pbp .bs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}#pbp button,#pbp a{font:inherit;font-size:12.5px;padding:7px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:inherit;text-decoration:none;cursor:pointer}#pbp a.go{background:#ffb454;color:#1c0f00;border-color:transparent;font-weight:700}
+</style><script>window.PB_DONE=function(i){var k=i.id.split(':').slice(1).join(':'),d=i.id.split(':')[0]
+ if(k.indexOf('qs:')===0){var s=(S().slots||[]).find(function(x){return 'qs:'+x.id===k});return s?REAL.q.some(function(e){return e.date===d&&e.kind===s.k&&!e.past}):false}
+ if(k==='qiyam')return qiyamOn(d)>=S().qiyam.min
+ if(k.indexOf('pr:')===0){var m={fajr:[0],dhuhr:[1,2,3],maghrib:[4],isha:[5]}[k.slice(3)],r=dayRec(d);return !!(m&&r&&m.every(function(b){return r.sn&(1<<b)}))}
+ if(k==='adhm')return qulsDone(adhProg(d,'am').got)
+ if(k==='adhe')return qulsDone(adhProg(d,'pm').got)
+ return false};(function(){
+ if(window.PB)return
+ var P=location.pathname.split('/').pop()||'index.html',SEC=(P.replace('.html','')||'index'),SK='plan_state',DK='plan_done',ZK='plan_snooze'
+ var NAMES={deen:'الدين',fitness:'التمارين',nutrition:'الغذاء',tech:'التقنية',index:'الجامعة',finance:'المالية'}
+ function jget(k,d){try{var v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v}catch(e){return d}}
+ function jset(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+ function items(){var st=jget(SK,null);if(!st||!st.items)return[];var now=Date.now(),dm=jget(DK,{}),sz=jget(ZK,{});return st.items.filter(function(i){return !dm[i.id]&&!(sz[i.id]>now)&&now>=i.from-10*60000&&now<=i.to+30*60000})}
+ function check(){if(typeof window.PB_DONE!=='function')return;var st=jget(SK,null);if(!st||!st.items)return;var dm=jget(DK,{}),ch=false
+  st.items.forEach(function(i){if(i.sec===SEC&&!dm[i.id]){var ok=false;try{ok=window.PB_DONE(i)}catch(e){}if(ok){dm[i.id]=Date.now();ch=true}}});if(ch)jset(DK,dm)}
+ function paint(){var it=items();document.querySelectorAll('.site-nav a').forEach(function(a){var h=(a.getAttribute('href')||'').replace('.html',''),n=it.filter(function(i){return i.sec===h}).length,tri=a.querySelector('.tri')
+   if(n){if(!tri){tri=document.createElement('b');tri.className='tri';a.appendChild(tri)}tri.textContent='▲'+(n>1?n:'');tri.setAttribute('data-sec',h)}else if(tri)tri.remove()})
+   var pn=document.getElementById('pbp');if(pn&&pn.dataset.sec)openPanel(pn.dataset.sec,true)}
+ function mins(i){var d=Math.round((i.from-Date.now())/60000);return d>1?'بعد '+d+' د':(Date.now()>i.to?'متأخر':'الحين')}
+ function openPanel(sec,keep){var it=items().filter(function(i){return i.sec===sec}),pn=document.getElementById('pbp')
+  if(!it.length){if(pn)pn.remove();return}
+  if(!pn){pn=document.createElement('div');pn.id='pbp';document.body.appendChild(pn)}pn.dataset.sec=sec
+  pn.innerHTML='<h4>▲ '+(NAMES[sec]||sec)+': وش تسوي جواه</h4>'+it.map(function(i){return '<div class="it"><b>'+i.label+'</b> <small>'+mins(i)+(i.detail?' · '+i.detail:'')+'</small><div class="bs"><a class="go" href="'+i.link+'">افتح</a><button data-pbd="'+i.id+'">تم ✓</button><button data-pbz="'+i.id+'">بعد 30 د</button></div></div>'}).join('')+'<div class="bs"><button data-pbx="1">إغلاق</button></div>'}
+ document.addEventListener('click',function(e){var t=e.target
+  var tri=t.closest&&t.closest('.site-nav .tri');if(tri){e.preventDefault();e.stopPropagation();var pn=document.getElementById('pbp');if(pn&&pn.dataset.sec===tri.getAttribute('data-sec'))pn.remove();else openPanel(tri.getAttribute('data-sec'));return}
+  if(t.closest&&t.closest('[data-pbx]')){var p=document.getElementById('pbp');if(p)p.remove();return}
+  var d=t.closest&&t.closest('[data-pbd]');if(d){var dm=jget(DK,{});dm[d.getAttribute('data-pbd')]=Date.now();jset(DK,dm);paint();return}
+  var z=t.closest&&t.closest('[data-pbz]');if(z){var sz=jget(ZK,{});sz[z.getAttribute('data-pbz')]=Date.now()+30*60000;jset(ZK,sz);paint();return}
+ },true)
+ window.PB={refresh:function(){check();paint()},items:items}
+ window.addEventListener('storage',function(){paint()});setInterval(function(){check();paint()},20000)
+ if(document.readyState!=='loading')window.PB.refresh();else document.addEventListener('DOMContentLoaded',function(){window.PB.refresh()})
+})();</script><!--/PB--></body>
 </html>
