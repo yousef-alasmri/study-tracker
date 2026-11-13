@@ -275,6 +275,8 @@ select.inp option{background:#17110e}
 
 .site-nav{gap:2px!important}.site-nav a{display:flex!important;flex-direction:column!important;align-items:center;gap:2px;font-size:10.5px!important;font-weight:600;padding:7px 1px!important;line-height:1.25;white-space:nowrap!important;min-width:0}.site-nav a i{font-style:normal;font-size:17px;line-height:1}
 
+.site-nav{gap:2px!important;max-width:620px!important}.site-nav a{display:flex!important;flex-direction:column!important;align-items:center;gap:2px;font-size:10px!important;font-weight:600;padding:7px 1px!important;line-height:1.25;white-space:nowrap!important;min-width:0;position:relative}.site-nav a i{font-style:normal;font-size:16px;line-height:1}
+
 /* ===== خاص بالتمارين ===== */
 .pos{color:#3ddc97}.neg{color:#ff7a6e}
 .chip-row{display:flex;gap:6px;flex-wrap:wrap}
@@ -357,7 +359,7 @@ var GATE=(function(){
 document.getElementById('gate-reload').onclick=function(){location.reload()};
 </script>
 <div class="app">
-  <nav class="site-nav" aria-label="الأقسام"><a href="index.html"><i>📚</i>الجامعة</a><a href="finance.html"><i>💰</i>المالية</a><a class="on" href="fitness.html"><i>💪</i>التمارين</a><a href="nutrition.html"><i>🍽️</i>الغذاء</a><a href="deen.html"><i>🕌</i>الدين</a><a href="tech.html"><i>🛠️</i>التقنية</a></nav>
+  <nav class="site-nav" aria-label="الأقسام"><a href="plan.html"><i>📅</i>اليومية</a><a href="index.html"><i>📚</i>الجامعة</a><a href="finance.html"><i>💰</i>المالية</a><a class="on" href="fitness.html"><i>💪</i>التمارين</a><a href="nutrition.html"><i>🍽️</i>الغذاء</a><a href="deen.html"><i>🕌</i>الدين</a><a href="tech.html"><i>🛠️</i>التقنية</a></nav>
   <header class="top">
     <div class="brand"><div class="logo" style="background:linear-gradient(135deg,#ff9a5c,#e2551d);color:#fff;box-shadow:0 6px 22px rgba(255,122,61,.35)">💪</div><div><div class="brand-t">التمارين</div><div class="brand-s" id="sub">علوي / سفلي · 4 أيام</div></div></div>
     <div class="top-actions">
@@ -631,6 +633,8 @@ const saveDraft=()=>{try{if(DRAFT)localStorage.setItem(KEY_DRAFT,JSON.stringify(
 
 /* ---------- منطق الجدول والسجل ---------- */
 const keyForDow=(dow,s=S())=>{const i=s.days.indexOf(dow);return i<0?null:DKEYS[i]}
+// التالي بدورتك: بعد آخر جلسة سجّلتها (حتى لو فاتك يوم أو تمرنت بيوم راحة)
+function suggestKey(d){const L=d.log.filter(l=>DKEYS.includes(l.dayKey)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0),last=L[L.length-1];return last?DKEYS[(DKEYS.indexOf(last.dayKey)+1)%DKEYS.length]:'upperA'}
 const logsOnDate=(d,date)=>d.log.filter(l=>l.date===date)
 const e1=(w,r)=>w>0&&r>0?w*(1+Math.min(r,12)/30):0
 function lastFor(id,before){
@@ -752,7 +756,7 @@ const phChip=ph=>`<span class="phase">الأسبوع ${ph.wk} · ${ph.name}</spa
 const mchips=key=>{const set=new Set();PROGRAM[key].ex.forEach(id=>set.add(EX[id].m));return [...set].map(m=>`<span class="mchip" style="color:${MCOLOR[m]}">${MUSCLES[m]}</span>`).join('')}
 
 function viewToday(){
-  const d=D(),s=d.settings,today=todayStr(),dow=dowOf(today),ph=planWeek(s,today),key=keyForDow(dow,s),doneToday=logsOnDate(d,today)[0]
+  const d=D(),s=d.settings,today=todayStr(),dow=dowOf(today),ph=planWeek(s,today),key=keyForDow(dow,s),doneToday=logsOnDate(d,today)[0],sk=suggestKey(d)
   const ws=weekStart(today),wkLogs=new Set(d.log.filter(l=>l.date>=ws&&l.date<addDays(ws,7)).map(l=>l.date)).size
   let hero=''
   if(DRAFT&&DRAFT.date===today){
@@ -770,11 +774,13 @@ function viewToday(){
       <div class="chip-row" style="margin:12px 0">${mchips(key)}</div>
       <div class="hero-sub" style="margin-bottom:14px">${phChip(ph)} <span style="opacity:.8">&nbsp;ريبس باقي (RIR): ${ph.rir}</span></div>
       <div class="note" style="margin:0 0 14px;color:rgba(236,245,240,.72)">${ph.tip}</div>
-      <button class="btn pri" style="width:100%;padding:15px;font-size:15px" data-act="start" data-id="${key}">ابدأ التمرين</button></div>`
+      <button class="btn pri" style="width:100%;padding:15px;font-size:15px" data-act="start" data-id="${key}">ابدأ التمرين</button>
+      ${sk!==key?`<div class="note" style="margin:12px 0 0;color:rgba(236,245,240,.8)">ترتيب دورتك: التالي <b>${PROGRAM[sk].ar}</b> (ممكن فاتك شي). تبي تسوّيه اليوم بدل ${p.ar}؟ <button class="btn sm" style="margin-top:8px" data-act="start" data-id="${sk}">سوّ ${PROGRAM[sk].ar}</button></div>`:''}</div>`
   }else{
     const rp=recPlan(s).find(x=>x.dow===dow),next=nextSession(s,today)
     hero=`<div class="card hero"><div class="lbl">اليوم · ${DAYS[dow]}</div><div class="big" style="font-size:clamp(30px,8vw,44px)">يوم راحة 😴</div>
       <div class="hero-sub">${next?`التمرين الجاي: <b>${PROGRAM[next.key].ar}</b> ${next.in===1?'بكرة':'بعد '+next.in+' أيام'}`:''}</div>
+      <div class="obs" style="background:rgba(0,0,0,.22);margin-top:12px">💪 تبي تتمرن اليوم (فاتك يوم أو تحب تزيد)؟ التالي بدورتك: <b>${PROGRAM[sk].ar}</b> · ${PROGRAM[sk].sub}<div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri" style="flex:1" data-act="start" data-id="${sk}">ابدأ ${PROGRAM[sk].ar} اليوم</button><button class="btn" data-act="pick">تمرين ثاني…</button></div></div>
       <div style="margin-top:14px">${(rp?rp.items:[]).map(([t,tx])=>`<div class="obs" style="background:rgba(0,0,0,.22)">${REC[t].icon} ${tx}</div>`).join('')}</div>
       <button class="btn" style="width:100%;margin-top:6px" data-act="recAdd">سجّل جلسة تعافي</button></div>`
   }
@@ -1177,7 +1183,7 @@ function formRec(type){
 }
 function formPick(){
   const opts=DKEYS.map(k=>({v:k,l:PROGRAM[k].ar+' — '+PROGRAM[k].sub}))
-  openForm({title:'ابدأ تمرين',fields:[{name:'key',label:'أي تمرين؟',type:'select',value:keyForDow(dowOf(todayStr()))||'upperA',options:opts}],submit:'ابدأ',onSubmit:v=>{startSession(v.key)}})
+  openForm({title:'ابدأ تمرين',sub:'يتسجّل بتاريخ اليوم. المحدد هو التالي بدورتك.',fields:[{name:'key',label:'أي تمرين؟',type:'select',value:suggestKey(D()),options:opts}],submit:'ابدأ',onSubmit:v=>{startSession(v.key)}})
 }
 function formSettings(){
   const s=S()
@@ -1224,6 +1230,7 @@ function startSession(key){
 const ACT={
  tab:id=>{ui.tab=id;ui.inSession=false;render(false);window.scrollTo({top:0})},
  start:id=>{const t=todayStr();if(logsOnDate(D(),t).length&&!(DRAFT&&DRAFT.date===t)){askConfirm('سجّلت تمرين اليوم قبل. تبي تسجّل تمرين ثاني؟',()=>startSession(id),'ابدأ')}else startSession(id)},
+ pick:()=>formPick(),
  resume:()=>{ui.inSession=true;keepAwake(true);render(false);window.scrollTo(0,0)},
  fab:()=>{
   if(ui.inSession){return}
@@ -1231,7 +1238,7 @@ const ACT={
   if(ui.tab==='recovery')return formRec()
   const t=todayStr(),k=keyForDow(dowOf(t))
   if(DRAFT)return ACT.resume()
-  if(ui.tab==='today'&&!k)return formRec()
+  if(ui.tab==='today'&&!k)return formPick()
   if(ui.tab==='today'&&k&&!logsOnDate(D(),t).length)return startSession(k)
   formPick()
  },
@@ -1446,10 +1453,45 @@ async function initSync(){
 
 
 if(DRAFT&&DRAFT.date===todayStr()){ui.tab='today'}
+function applyHash(){const h=(location.hash||'').slice(1).split('-');if(h[0]&&TABS.some(t=>t[0]===h[0])){ui.tab=h[0];if(h[1]&&typeof ui.wt!=='undefined')ui.wt=h[1];return true}return false}
+applyHash();addEventListener('hashchange',()=>{if(applyHash()){render(false);window.scrollTo({top:0})}})
 render(false)
 initSync()
 
 </script>
 <script>/* تحذير اسم الملف: يظهر بس لو اسم هذا الملف غلط */(function(){var exp='fitness.html',seg='';try{seg=decodeURIComponent(location.pathname.split('/').pop()||'')}catch(e){}var ok=!seg||seg===exp||(location.protocol!=='file:'&&seg===exp.replace('.html',''));if(ok)return;var d=document.createElement('div');d.className='no-print';d.setAttribute('role','alert');d.style.cssText='position:relative;z-index:2147483647;background:#b3261e;color:#fff;padding:12px 14px;font:600 13px/1.7 system-ui,sans-serif;text-align:center;direction:rtl';d.textContent='⚠ اسم هذا الملف «'+seg+'» غلط. لازم يكون «'+exp+'» بالضبط، وإلا زر التنقل بين الأقسام ما يشتغل. غيّر اسمه (كليك يمين ← Rename).';document.body.insertBefore(d,document.body.firstChild)})();</script>
-</body>
+<!--PB--><style id="pb-css">
+.site-nav a{position:relative}
+.site-nav .tri{position:absolute;top:0;inset-inline-end:4px;font-size:9px;line-height:1;color:#1c0f00;background:#ffb454;border-radius:6px;padding:2px 4px;font-weight:800;box-shadow:0 0 0 2px rgba(0,0,0,.4);animation:pbp 1.6s infinite}
+@keyframes pbp{50%{transform:scale(1.18)}}
+#pbp{position:fixed;inset-inline:10px;top:74px;z-index:90;max-height:72vh;overflow:auto;padding:14px;border-radius:18px;background:rgba(20,18,34,.98);border:1px solid rgba(255,180,84,.65);box-shadow:0 16px 40px rgba(0,0,0,.6);direction:rtl;font-family:inherit;color:#f1effa}
+#pbp h4{margin:0 0 6px;font-size:15px}#pbp .it{padding:10px 0;border-top:1px solid rgba(255,255,255,.1)}#pbp .it b{font-size:14px;line-height:1.6}#pbp .it small{display:block;color:#a39fc0;font-size:12px;line-height:1.7;margin-top:2px}
+#pbp .bs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}#pbp button,#pbp a{font:inherit;font-size:12.5px;padding:7px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:inherit;text-decoration:none;cursor:pointer}#pbp a.go{background:#ffb454;color:#1c0f00;border-color:transparent;font-weight:700}
+</style><script>window.PB_DONE=function(i){var d=i.id.split(':')[0];return D().log.some(function(l){return l.date===d})};(function(){
+ if(window.PB)return
+ var P=location.pathname.split('/').pop()||'index.html',SEC=(P.replace('.html','')||'index'),SK='plan_state',DK='plan_done',ZK='plan_snooze'
+ var NAMES={deen:'الدين',fitness:'التمارين',nutrition:'الغذاء',tech:'التقنية',index:'الجامعة',finance:'المالية'}
+ function jget(k,d){try{var v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v}catch(e){return d}}
+ function jset(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+ function items(){var st=jget(SK,null);if(!st||!st.items)return[];var now=Date.now(),dm=jget(DK,{}),sz=jget(ZK,{});return st.items.filter(function(i){return !dm[i.id]&&!(sz[i.id]>now)&&now>=i.from-10*60000&&now<=i.to+30*60000})}
+ function check(){if(typeof window.PB_DONE!=='function')return;var st=jget(SK,null);if(!st||!st.items)return;var dm=jget(DK,{}),ch=false
+  st.items.forEach(function(i){if(i.sec===SEC&&!dm[i.id]){var ok=false;try{ok=window.PB_DONE(i)}catch(e){}if(ok){dm[i.id]=Date.now();ch=true}}});if(ch)jset(DK,dm)}
+ function paint(){var it=items();document.querySelectorAll('.site-nav a').forEach(function(a){var h=(a.getAttribute('href')||'').replace('.html',''),n=it.filter(function(i){return i.sec===h}).length,tri=a.querySelector('.tri')
+   if(n){if(!tri){tri=document.createElement('b');tri.className='tri';a.appendChild(tri)}tri.textContent='▲'+(n>1?n:'');tri.setAttribute('data-sec',h)}else if(tri)tri.remove()})
+   var pn=document.getElementById('pbp');if(pn&&pn.dataset.sec)openPanel(pn.dataset.sec,true)}
+ function mins(i){var d=Math.round((i.from-Date.now())/60000);return d>1?'بعد '+d+' د':(Date.now()>i.to?'متأخر':'الحين')}
+ function openPanel(sec,keep){var it=items().filter(function(i){return i.sec===sec}),pn=document.getElementById('pbp')
+  if(!it.length){if(pn)pn.remove();return}
+  if(!pn){pn=document.createElement('div');pn.id='pbp';document.body.appendChild(pn)}pn.dataset.sec=sec
+  pn.innerHTML='<h4>▲ '+(NAMES[sec]||sec)+': وش تسوي جواه</h4>'+it.map(function(i){return '<div class="it"><b>'+i.label+'</b> <small>'+mins(i)+(i.detail?' · '+i.detail:'')+'</small><div class="bs"><a class="go" href="'+i.link+'">افتح</a><button data-pbd="'+i.id+'">تم ✓</button><button data-pbz="'+i.id+'">بعد 30 د</button></div></div>'}).join('')+'<div class="bs"><button data-pbx="1">إغلاق</button></div>'}
+ document.addEventListener('click',function(e){var t=e.target
+  var tri=t.closest&&t.closest('.site-nav .tri');if(tri){e.preventDefault();e.stopPropagation();var pn=document.getElementById('pbp');if(pn&&pn.dataset.sec===tri.getAttribute('data-sec'))pn.remove();else openPanel(tri.getAttribute('data-sec'));return}
+  if(t.closest&&t.closest('[data-pbx]')){var p=document.getElementById('pbp');if(p)p.remove();return}
+  var d=t.closest&&t.closest('[data-pbd]');if(d){var dm=jget(DK,{});dm[d.getAttribute('data-pbd')]=Date.now();jset(DK,dm);paint();return}
+  var z=t.closest&&t.closest('[data-pbz]');if(z){var sz=jget(ZK,{});sz[z.getAttribute('data-pbz')]=Date.now()+30*60000;jset(ZK,sz);paint();return}
+ },true)
+ window.PB={refresh:function(){check();paint()},items:items}
+ window.addEventListener('storage',function(){paint()});setInterval(function(){check();paint()},20000)
+ if(document.readyState!=='loading')window.PB.refresh();else document.addEventListener('DOMContentLoaded',function(){window.PB.refresh()})
+})();</script><!--/PB--></body>
 </html>
